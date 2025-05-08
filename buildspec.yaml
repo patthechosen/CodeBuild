@@ -1,0 +1,27 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.9 # This will install Python 3.9 on the environment
+
+  pre_build: # Check if your environment has all tools
+    commands:
+      - echo "=== Check if Python and AWS CLI were installed successfully ==="
+      - python --version
+      - aws --version
+
+  build:
+    commands:
+      - echo "=== RUN YOUR CODE HERE ==="
+      - python my_app.py # RUN A PYTHON CODE
+
+  post_build:
+    commands:
+      - echo "=== THIS IS MY POSTBUILD SECTION ==="
+      - echo "Build completed on `date`..." # TELL THE USER WHEN THE BUILD IS COMPLETE
+
+artifacts:
+  files:
+    - '**/*'
+  name: my-built-artifact-$(date +%y-%m-%d)
