@@ -33,5 +33,6 @@ phases:
 
 artifacts:
   files:
-    - '**/*'
-  name: my-built-artifact-$(date +%y-%m-%d)
+    - build-artifact.yaml
+    - build-artifact-2.yaml
+  
