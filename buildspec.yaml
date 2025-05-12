@@ -8,17 +8,18 @@ phases:
       - echo "=== Check if Python and AWS CLI were installed successfully ==="
       - python --version
       - aws --version
-      - echo === CHECK CFN-LINT ===
+      - echo "=== CHECK CFN-LINT ==="
+      - pip install cfn-lint  # Install cfn-lint
       - cfn-lint --version
 
   pre_build: # Check if your environment has all tools
     commands:
-     - echo === CHECK FOR SYNTAX ON OUR TEMPLATES ===
-     - cfn-lint pipeline_us-east-1-ec2.yaml
-     - cfn-lint pipeline_us-west-1_ec2.yaml
-     - echo === BUILD OUR CLOUDFORMATION ===
-     - aws cloudformation package --template-file pipeline_us-east-1-ec2.yaml --s3-bucket patartifactbucket  --output-template-file build-artifact.yaml
-     - aws cloudformation package --template-file pipeline_us-west-1_ec2.yaml --s3-bucket patartifactbucket  --output-template-file build-artifact-2.yaml
+      - echo "=== CHECK FOR SYNTAX ON OUR TEMPLATES ==="
+      - cfn-lint pipeline_us-east-1-ec2.yaml
+      - cfn-lint pipeline_us-west-1_ec2.yaml
+      - echo "=== BUILD OUR CLOUDFORMATION ==="
+      - aws cloudformation package --template-file pipeline_us-east-1-ec2.yaml --s3-bucket patartifactbucket  --output-template-file build-artifact.yaml
+      - aws cloudformation package --template-file pipeline_us-west-1_ec2.yaml --s3-bucket patartifactbucket  --output-template-file build-artifact-2.yaml
 
   build:
     commands:
