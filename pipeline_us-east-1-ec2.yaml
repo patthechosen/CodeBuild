@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: CloudFormation template to create a custom VPC, EC2 instance with a security group, and SSM role in the us-east-1 region.
+Description: CloudFormation template to create a custom VPC, EC2 instance with a security group, and SSM role in the specified region.
 
 Parameters:
   InstanceType:
@@ -63,7 +63,7 @@ Resources:
     Properties:
       VpcId: !Ref MyVPC
       CidrBlock: 192.168.1.0/24
-      AvailabilityZone: !Select [0, !GetAZs 'us-east-1']  # Corrected to us-east-1
+      AvailabilityZone: !Select [0, !GetAZs !Ref "AWS::Region"]  # Use the dynamic region
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
@@ -137,7 +137,8 @@ Resources:
           yum install -y httpd
           systemctl start httpd
           systemctl enable httpd
-          echo '<html><body><h1 style="color: blue;">Welcome to our first user data launch through 5 Stages CI/CD code pipeline in Us-east-1</h1></body></html>' > /var/www/html/index.html
+          echo '<html><body><h1 style="color: blue;">Welcome to our first user data launch through 5 Stages CI/CD code pipeline in ${AWS::Region}</h1></body></html>' > /var/www/html/index.html
+
 Outputs:
   InstanceId:
     Value: 
