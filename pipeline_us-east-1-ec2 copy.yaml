@@ -1,0 +1,166 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Full CloudFormation template that creates a VPC, subnet, route table, security group,
+  and an EC2 instance with user data, EIP and customizable parameters.
+
+Parameters:
+  SSHLocation:
+    Type: String
+    Description: Enter the CIDR block that can be used to SSH into the instances. e.g., 203.0.113.0/24
+
+  InstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+      - t2.medium
+      - t3.micro
+      - m1.small
+      - m1.large
+      - m3.medium
+      - m3.large
+      - m4.large
+      - m4.xlarge
+      - m4.2xlarge
+      - m5.large
+
+  DepartmentName:
+    Description: Department name for the EC2 instance
+    Type: String
+
+  AreaManager:
+    Description: Area manager for the EC2 instance
+    Type: String
+
+  DBPwd:
+    NoEcho: true
+    Description: DB admin password
+    Type: String
+    MinLength: 1
+    MaxLength: 41
+    AllowedPattern: '^[a-zA-Z0-9]*$'
+
+Mappings:
+  RegionAmiMap:
+    us-east-1:
+      HVM64: ami-0c02fb55956c7d316
+    us-east-2:
+      HVM64: ami-060a84cbcb5c14844
+    us-west-2:
+      HVM64: ami-05572e392e80aee89
+    eu-west-1:
+      HVM64: ami-052efd3df9dad4825
+    us-west-1:
+      HVM64: ami-04fc83311a8d478df
+
+Resources:
+  VPC:
+    Type: 'AWS::EC2::VPC'
+    Properties:
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      CidrBlock: 192.168.0.0/16
+
+  PublicSubnet:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 192.168.1.0/24
+
+  InternetGateway:
+    Type: 'AWS::EC2::InternetGateway'
+
+  VPCGatewayAttachment:
+    Type: 'AWS::EC2::VPCGatewayAttachment'
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicRouteTable:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref VPC
+
+  PublicRoute:
+    Type: 'AWS::EC2::Route'
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnetRouteTableAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicSubnetNetworkAclAssociation:
+    Type: 'AWS::EC2::SubnetNetworkAclAssociation'
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      NetworkAclId: !GetAtt VPC.DefaultNetworkAcl
+
+  WebServerSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Enable HTTP and SSH ingress
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref SSHLocation
+
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      ImageId: !FindInMap [RegionAmiMap, !Ref "AWS::Region", HVM64]
+      SubnetId: !Ref PublicSubnet
+      SecurityGroupIds:
+        - !Ref WebServerSecurityGroup
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install httpd -y
+          systemctl start httpd
+          systemctl enable httpd
+          echo '<html><body><h1 style="color: blue;">Welcome to our first user data launch through 5 Stages CI/CD code pipeline in ${AWS::Region}</h1></body></html>' > /var/www/html/index.html
+      Tags:
+        - Key: Name
+          Value: My-Pipeline-yaml-ec2
+        - Key: PatrickDBPwd
+          Value: !Ref DBPwd
+
+  myEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      InstanceId: !Ref EC2Instance
+
+Outputs:
+  InstanceId:
+    Description: Instance ID
+    Value: !Ref EC2Instance
+
+  PrivateIp:
+    Description: Private IP of the EC2 instance
+    Value: !GetAtt EC2Instance.PrivateIp
+
+  PublicDnsName:
+    Description: Public DNS of the EC2 instance
+    Value: !GetAtt EC2Instance.PublicDnsName
+
+  Departmentsub: 
+    Description: Department info
+    Value: !Sub "This EC2 instance belongs to ${DepartmentName} Department"
+
+  AreaManagersub: 
+    Description: Manager info
+    Value: !Sub "The Area Manager of the ${DepartmentName} Department is ${AreaManager}"
