@@ -6,7 +6,8 @@ Description: >
 Parameters:
   SSHLocation:
     Type: String
-    Description: Enter the CIDR block that can be used to SSH into the instances. e.g., 203.0.113.0/24
+    Description: CIDR block for SSH access (e.g., 203.0.113.0/24)
+    Default: 0.0.0.0/0
 
   InstanceType:
     Description: EC2 instance type
@@ -28,10 +29,12 @@ Parameters:
   DepartmentName:
     Description: Department name for the EC2 instance
     Type: String
+    Default: DepartmentName
 
   AreaManager:
     Description: Area manager for the EC2 instance
     Type: String
+    Default: AreaManagerName
 
   DBPwd:
     NoEcho: true
@@ -40,9 +43,10 @@ Parameters:
     MinLength: 1
     MaxLength: 41
     AllowedPattern: '^[a-zA-Z0-9]*$'
+    Default: MyDefaultPass123  # You should change this
 
   KeyName:
-    Description: Name of an existing EC2 key pair for SSH access to the EC2 instance.
+    Description: Name of an existing EC2 key pair for SSH access
     Type: AWS::EC2::KeyPair::KeyName
     Default: Myprivate-key-pair
 
@@ -61,34 +65,34 @@ Mappings:
 
 Resources:
   VPC:
-    Type: 'AWS::EC2::VPC'
+    Type: AWS::EC2::VPC
     Properties:
       EnableDnsSupport: true
       EnableDnsHostnames: true
       CidrBlock: 192.168.0.0/16
 
   PublicSubnet:
-    Type: 'AWS::EC2::Subnet'
+    Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
       CidrBlock: 192.168.1.0/24
 
   InternetGateway:
-    Type: 'AWS::EC2::InternetGateway'
+    Type: AWS::EC2::InternetGateway
 
   VPCGatewayAttachment:
-    Type: 'AWS::EC2::VPCGatewayAttachment'
+    Type: AWS::EC2::VPCGatewayAttachment
     Properties:
       VpcId: !Ref VPC
       InternetGatewayId: !Ref InternetGateway
 
   PublicRouteTable:
-    Type: 'AWS::EC2::RouteTable'
+    Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
 
   PublicRoute:
-    Type: 'AWS::EC2::Route'
+    Type: AWS::EC2::Route
     DependsOn: VPCGatewayAttachment
     Properties:
       RouteTableId: !Ref PublicRouteTable
@@ -96,19 +100,19 @@ Resources:
       GatewayId: !Ref InternetGateway
 
   PublicSubnetRouteTableAssociation:
-    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PublicSubnet
       RouteTableId: !Ref PublicRouteTable
 
   PublicSubnetNetworkAclAssociation:
-    Type: 'AWS::EC2::SubnetNetworkAclAssociation'
+    Type: AWS::EC2::SubnetNetworkAclAssociation
     Properties:
       SubnetId: !Ref PublicSubnet
       NetworkAclId: !GetAtt VPC.DefaultNetworkAcl
 
   WebServerSecurityGroup:
-    Type: 'AWS::EC2::SecurityGroup'
+    Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Enable HTTP and SSH ingress
       VpcId: !Ref VPC
