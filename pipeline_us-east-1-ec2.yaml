@@ -41,6 +41,11 @@ Parameters:
     MaxLength: 41
     AllowedPattern: '^[a-zA-Z0-9]*$'
 
+  KeyName:
+    Description: Name of an existing EC2 key pair for SSH access to the EC2 instance.
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: Myprivate-key-pair
+
 Mappings:
   RegionAmiMap:
     us-east-1:
@@ -58,8 +63,8 @@ Resources:
   VPC:
     Type: 'AWS::EC2::VPC'
     Properties:
-      EnableDnsSupport: 'true'
-      EnableDnsHostnames: 'true'
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
       CidrBlock: 192.168.0.0/16
 
   PublicSubnet:
@@ -122,6 +127,7 @@ Resources:
     Properties:
       InstanceType: !Ref InstanceType
       ImageId: !FindInMap [RegionAmiMap, !Ref "AWS::Region", HVM64]
+      KeyName: !Ref KeyName
       SubnetId: !Ref PublicSubnet
       SecurityGroupIds:
         - !Ref WebServerSecurityGroup
