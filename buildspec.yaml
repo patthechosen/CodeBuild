@@ -17,7 +17,7 @@ phases:
       - echo "=== CHECK FOR SYNTAX ON OUR TEMPLATES ==="
       - cfn-lint pipeline_us-east-1-ec2.yaml
       - echo "=== BUILD OUR CLOUDFORMATION ==="
-      - aws cloudformation package --template-file pipeline_us-east-1-ec2.yaml  --s3-bucket patartifactbucket --output-template-file build-artifact.yaml
+      - aws cloudformation package --template-file pipeline_us-east-1-ec2.yaml  --s3-bucket patartifactbucket --output-template-file build-artifact.yaml --region us-east-1 --debug
      
 
   build:
